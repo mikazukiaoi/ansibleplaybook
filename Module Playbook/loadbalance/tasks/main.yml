@@ -1,0 +1,44 @@
+- hosts: webserver
+  
+  tasks:
+  - name: install epel-repo
+    yum:
+     name: epel-release
+     state: latest
+
+  - name: install nginx
+    yum:
+     name: nginx
+     state: latest
+
+  - name: nyalain webnya
+    service: name=nginx state=running enabled=true
+
+  - name: nyalain tembokapi
+    service: name=firewalld state=running enabled=true
+
+  - name: tambahin akses port
+    firewalld:
+     service: http
+     permanent: true
+     state: enabled
+
+  - name: restart webnya
+    service: name=nginx state=restarted
+
+  - name: restart tembokapi
+    service: name=firewalld state=reloaded
+
+  - name: create folder
+    file: path={{item}} state=directory
+    with_items:
+     - /usr/share/nginx/mars
+
+  - name: copy file konfigurasi
+    template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
+
+  - name: buat vhost
+    template: src=vhostlb.conf.j2 dest=/etc/nginx/conf.d/vhostlb.conf
+
+   - name: restart lagi webnya
+    service: name=nginx state=restarted

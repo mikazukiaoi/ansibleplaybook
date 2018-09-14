@@ -1,0 +1,18 @@
+- name: slave change master
+  mysql_replication:
+   mode: changemaster
+   master_host: 10.0.50.117
+   master_user: slave
+   master_password: dhika123
+   master_log_file: 10-bin.000004
+   master_log_pos: 245
+
+- name: check slave
+  mysql_replication:
+   mode: getslave
+   login_host: 10.0.50.118
+   login_port: 3306
+
+- name: start slave
+  mysql_replication:
+   mode: startslave

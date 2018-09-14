@@ -1,0 +1,12 @@
+upstream webserver {
+	server	10.0.50.187;
+	server	10.0.50.188;
+}
+
+server {
+	listen	10.0.50.186:80;
+	location / {
+		proxy_pass http://webserver;
+		proxy_next_upstream error timeout invalid_header http_404 http_500 http_502 http_503 http_504;
+	}
+}

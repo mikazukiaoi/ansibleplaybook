@@ -1,0 +1,140 @@
+- hosts: tarball
+
+  tasks:
+  - name: install gcc
+    yum:
+     name: gcc
+     state: latest
+
+  - name: install bzip2
+    yum:
+     name: bzip2
+     state: latest
+  
+  - name: create group
+    group:
+     name: weareweb-ulululu
+     state: present
+
+  - name: create user
+    user:
+     name: dhika-web
+     shell: /bin/false
+     group: weareweb-ulululu
+
+  - name: create folder
+    file:
+     path: /var/www
+     state: directory
+     owner: dhika-web
+     group: weareweb-ulululu
+     mode: 0644
+
+  - name: create folder again
+    file:
+     path: /usr/local/src
+     state: directory
+
+  - name: create php folder
+    file:
+     path: /opt/php-7.2.7
+     state: directory
+
+  - name: unarchive php
+    unarchive:
+     src: http://us.php.net/get/php-7.2.7.tar.bz2/from/this/mirror
+     dest: /usr/local/src
+     remote_src: yes
+
+  - name: install dependecies php
+    yum:
+     name: "{{ item }}"
+     state: latest
+    with_items:
+     - libxml2
+     - libxml2-devel
+
+  - name: konfigurasi installer
+    command: "{{ item }}"
+    args:
+     chdir: /usr/local/src/php-7.2.7
+    with_items:
+     - ./configure --prefix=/opt/php-7.2.7 --enable-fpm --enable-opcache
+     - make
+     - make install
+
+  - name: copy file konfig
+    copy: src=php.ini dest=/opt/php-7.2.7/lib/php.ini
+
+  - name: copy file konfig lagi
+    copy: src=php-fpm.conf dest=/opt/php-7.2.7/etc/php-fpm.conf
+
+  - name: start php-fpm
+    command: /opt/php-7.2.7/sbin/php-fpm --fpm-config /opt/php-7.2.7/etc/php-fpm.conf
+   
+  - name: create directory
+    file:
+     path: /opt/httpd-2.4.33
+     state: directory
+  
+  - name: download apache
+    unarchive:
+     src: http://apache.cbox.biz//httpd/httpd-2.4.33.tar.bz2
+     dest: /usr/local/src
+     remote_src: yes
+
+  - name: download dependecies part1
+    unarchive:
+     src: http://www-eu.apache.org/dist//apr/apr-1.6.3.tar.bz2
+     dest: /usr/local/src/httpd-2.4.33/srclib
+     remote_src: yes
+
+  - name: change name
+    command: mv /usr/local/src/httpd-2.4.33/srclib/apr-1.6.3 /usr/local/src/httpd-2.4.33/srclib/apr
+
+  - name: part 2 nya
+    unarchive:
+     src: http://www-eu.apache.org/dist//apr/apr-util-1.6.1.tar.bz2
+     dest: /usr/local/src/httpd-2.4.33/srclib
+     remote_src: yes
+  
+  - name: change name again
+    command: mv /usr/local/src/httpd-2.4.33/srclib/apr-util-1.6.1 /usr/local/src/httpd-2.4.33/srclib/apr-util
+
+  - name: part 3
+    yum:
+     name: pcre-devel
+     state: latest
+
+  - name: part 4
+    yum:
+     name: expat-devel
+     state: latest
+
+  - name: configure bro
+    command: "{{ item }}"
+    args:
+     chdir: /usr/local/src/httpd-2.4.33
+    with_items:
+     - ./configure --prefix=/opt/httpd-2.4.33 --enable-opcache
+     - make
+     - make install
+
+  - name: copy file konfig http
+    copy: src=httpd.conf dest=/opt/httpd-2.4.33/conf/httpd.conf
+
+  - name: start gaes
+    command: /opt/httpd-2.4.33/bin/apachectl start
+
+  - name: create file ea
+    command: echo "<?php phpinfo();" >> /var/www/info.php
+    
+  - name: firewall
+    firewalld:
+     service: http
+     permanent: true
+     state: enabled
+  
+  - name: reload firewall
+    service: firewalld
+    state: reloaded

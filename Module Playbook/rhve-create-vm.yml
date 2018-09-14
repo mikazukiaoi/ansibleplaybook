@@ -1,0 +1,51 @@
+---
+  - name: RHV VM Provisioning
+    hosts: localhost
+    connection: local
+
+    tasks:
+      - name: variabel
+        include_vars: ovirt_password.yml
+      - block: 
+          - name: Obtain SSO Token with using username/password credentials
+            ovirt_auth: 
+              url: https://10.0.50.10/ovirt-engine/api
+              username: "{{ ovirt_username }}"
+              password: "{{ ovirt_password }}"
+              insecure: true
+          - name: Create VM from kopong
+            ovirt_vms: 
+              auth: "{{ ovirt_auth }}"
+              state: stopped
+              name: this-is-vm
+              cluster: BC21A
+              memory: 1GiB
+              type: server
+              host: RHVH03
+              operating_system: other_linux
+              disks:
+               - name: rhevprov-test
+                 bootable: true
+              cd_iso: CentOS-7-x86_64-DVD-1611.iso
+              boot_devices:
+               - cdrom
+              cpu_cores: 1
+              cpu_sockets: 1
+              nics:
+                - name: nic1
+                  profile_name: ovirtmgmt
+              cloud_init: 
+                host_name: this-is-vm
+                nic_boot_protocol: static
+                nic_ip_address: 10.0.50.19
+                nic_netmask: 255.255.255.0
+                nic_gateway: 10.0.50.1
+                nic_name: eth0
+                nic_on_boot: true
+                dns_servers: 8.8.8.8 
+
+        always:
+          - name: Always revoke the SSO token
+            ovirt_auth:
+              state: absent
+              ovirt_auth: "{{ ovirt_auth }}"

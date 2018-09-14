@@ -1,0 +1,61 @@
+- hosts: 10.0.50.118
+  vars:
+   mysql_root_password: passwd
+
+  tasks:
+  - name: install mysql
+    yum:
+     name: mariadb-server
+     state: present
+
+  - name: install piton
+    yum:
+     name: MySQL-python
+     state: latest
+
+  - name: start dan enable maria
+    service: name=mariadb state=running enabled=true
+
+  - name: update mysql
+    mysql_user:
+     name: root
+     host: "{{ item }}"
+     password: dhika123
+     check_implicit_admin: yes
+     priv: "*.*:ALL,GRANT"
+
+    with_items:
+     - 10.0.50.118
+     - 127.0.0.1
+     - ::1
+     - localhost
+
+  - name: copy credential
+    template: src=root.cnf.j2 dest=~/.my.cnf mode=0600
+
+  - name: copy config file
+    template: src=my.cnf.slave.j2 dest=/etc/my.cnf
+
+  - name: include file
+    include_tasks: replicationslave.yml
+
+  - name: create database
+    mysql_db:
+     name: test
+     state: present
+     login_user: root
+     login_password: dhika123
+
+  - name: restart mariadb
+    service: name=mariadb state=restarted
+
+  - name: firewalld
+    firewalld:
+     service: mysql
+     permanent: true
+     state: enabled
+
+  - name: reload firewall
+    service:
+     name: firewalld
+     state: reloaded

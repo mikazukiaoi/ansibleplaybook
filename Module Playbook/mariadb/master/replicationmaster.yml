@@ -1,0 +1,15 @@
+- name: stop slave
+  mysql_replication:
+   mode: stopslave
+
+- name: create user
+  mysql_user:
+   name: slave
+   host: 10.0.50.118
+   password: dhika123
+   priv: "*.*:ALL,GRANT"
+
+- name: get binlog
+  mysql_replication:
+   mode: getmaster
+

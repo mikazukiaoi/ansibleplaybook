@@ -1,0 +1,19 @@
+- hosts: 10.0.50.27
+  name: stop cloud init
+  
+  tasks:
+    - name: stop cloud
+      service:
+       name: "{{ item }}"
+       state: stopped
+      with_items:
+       - cloud-init
+       - cloud-init-local
+       - cloud-final
+       - cloud-config
+
+    - name: disable cloud
+      command: systemctl disable cloud-config cloud-final cloud-init-local cloud-init
+
+    - name: restart system
+      command: /sbin/shutdown -r +1 "This Server is going down captain! Just 1 Minute from Now!"
